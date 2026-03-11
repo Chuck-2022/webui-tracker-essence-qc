@@ -1,20 +1,12 @@
-version: '3.8'
-
 services:
   gasbuddy-scraper:
-    build: .
+    image: docker.io/library/gasbuddy-scraper
     container_name: gasbuddy-scraper
     ports:
-      - "5000:5000"
+      - 5000:5000
     volumes:
-      - ./websites.db:/app/websites.db
-      - ./templates:/app/templates
+      - /mnt/main/custom_apps/gasbuddy_scraper/websites.db:/app/websites.db
+      - /mnt/main/custom_apps/gasbuddy_scraper/templates:/app/templates
     environment:
       - FLASK_ENV=production
     restart: unless-stopped
-    networks:
-      - gasbuddy-network
-
-networks:
-  gasbuddy-network:
-    driver: bridge
