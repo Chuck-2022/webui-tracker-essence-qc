@@ -6,6 +6,7 @@ WORKDIR /app
 # Copy requirements first (for better caching)
 COPY requirements.txt .
 
+RUN git pull
 # Install dependencies
 RUN pip3 install --no-cache-dir -r requirements.txt
 
