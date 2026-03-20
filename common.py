@@ -8,7 +8,6 @@ def get_time():
     toronto_tz = timezone(timedelta(hours=toronto_offset_hours))
 
     toronto_time = datetime.now(toronto_tz)
-    print(toronto_time.strftime('%Y-%m-%d %H:%M:%S'))
     return  toronto_time.strftime('%Y-%m-%d %H:%M:%S')
 
 def lint_data(data):
@@ -27,7 +26,6 @@ def fetch_data(url):
         'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     ]
     t = random.choice(USER_AGENTS)
-    print(t)
     headers = {
         'User-Agent': t,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
