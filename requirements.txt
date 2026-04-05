@@ -4,3 +4,4 @@ beautifulsoup4==4.12.2
 lxml==4.9.3
 pysqlite3
 apscheduler
+pandas==2.0.3

@@ -1,7 +1,5 @@
 from flask import Flask, request, render_template, redirect, url_for, flash
-import random
 from database import *
-import time
 from common import *
 import pandas as pd
 from apscheduler.schedulers.background import BackgroundScheduler
