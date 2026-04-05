@@ -1,105 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>GasBuddy Scraper - Website Manager</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Station Tracker</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .form-group { margin-bottom: 15px; }
-        input[type="text"] { padding: 8px; width: 300px; }
-        button { padding: 8px 15px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #45a049; }
-        .delete-btn { background-color: #f44336; padding: 5px 10px; font-size: 12px; }
-        .delete-btn:hover { background-color: #da190b; }
-        .update-btn { background-color: #2196F3; padding: 5px 10px; font-size: 12px; }
-        .update-btn:hover { background-color: #0b7dda; }
-        .flash-messages { margin-bottom: 20px; }
-        .flash-success { color: green; }
-        .flash-error { color: red; }
-        .website-name { font-weight: bold; }
-        .price { color: #2e7d32; font-weight: bold; }
-        .updated { font-size: 12px; color: #666; }
+        .search-form { margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+        .search-form input, .search-form button { padding: 10px; font-size: 1rem; }
+        .search-form input { flex: 0 1 220px; min-width: 140px; max-width: 260px; }
+        .search-form button { flex: 0 0 auto; min-width: 100px; }
+        .table-container { margin-bottom: 30px; overflow-x: auto; }
+        table { width: 100%; min-width: 700px; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; white-space: wrap; }
+        th { background-color: #f8f8f8; }
+        .selected-row { background-color: #eafbea; }
+        .empty-state { color: #666; margin: 10px 0; }
+        .actions a { margin-right: 10px; display: inline-block; padding: 6px 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
+        .actions a:hover { background: #0056b3; }
+        .actions a:last-child { margin-right: 0; }
+        button { margin-left: 0; }
+
+        @media (max-width: 768px) {
+            body { margin: 10px; }
+            .search-form { gap: 8px; }
+            .search-form input, .search-form button { width: 100%; flex: 1 1 100%; }
+            .table-container { margin-bottom: 20px; }
+            table { min-width: 100%; }
+            th, td { padding: 8px; }
+            .actions a { display: block; margin-bottom: 8px; }
+        }
     </style>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
-    <meta charset="UTF-8">
-    <h1>GasBuddy Scraper - Website Manager</h1>
-    
-    <!-- Flash Messages -->
-    <div id="flash-messages" class="flash-messages">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <p class="flash-{{ category }}">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
+    <h1>Station Search</h1>
 
-    <!-- Add New Website Form -->
-    <h2>Add New Website</h2>
-    <form method="POST" action="{{ url_for('index') }}">
-        <div class="form-group">
-            <label for="url">Website URL:</label><br>
-            <input type="text" id="url" name="url" placeholder="https://www.gasbuddy.com/station/99222" required>
-        </div>
-        <!-- <div class="form-group">
-            <label for="name">Website Name:</label><br>
-            <input type="text" id="name" name="name" placeholder="Example Station" required>
-        </div> -->
-        <button type="submit">Add Website</button>
-    </form>
-    
-    <!-- Websites Table -->
-    <h2>Managed Websites</h2>
-    {% if websites %}
-    <form method="POST" action="{{ url_for('update_all') }}">
-        <button type="submit">Update All</button>
-    </form>
+    {% if selected_stations %}
+    <div class="table-container">
+        <h2>Selected Stations</h2>
         <table>
             <thead>
                 <tr>
-                    <th>Station Name</th>
-                    <th>URL</th>
-                    <th>Price</th>
-                    <th>Last Updated</th>
-                    <th>Last Refresh</th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='banner', sort_dir='desc' if sort_by=='banner' and sort_dir=='asc' else 'asc') }}">Banner{% if sort_by == 'banner' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='address', sort_dir='desc' if sort_by=='address' and sort_dir=='asc' else 'asc') }}">Address{% if sort_by == 'address' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='prix_regulier', sort_dir='desc' if sort_by=='prix_regulier' and sort_dir=='asc' else 'asc') }}">Prix Régulier{% if sort_by == 'prix_regulier' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='prix_super', sort_dir='desc' if sort_by=='prix_super' and sort_dir=='asc' else 'asc') }}">Prix Super{% if sort_by == 'prix_super' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='code_postal', sort_dir='desc' if sort_by=='code_postal' and sort_dir=='asc' else 'asc') }}">Code Postal{% if sort_by == 'code_postal' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {% for website in websites %}
-                <tr>
-                    <td class="website-name"><a href="{{ website[6] }}" target="_blank"> {{ website[2] or 'N/A' }}</a></td>
-                    <td><a href="{{ website[1] }}" target="_blank">{{ website[1] }}</a></td>
-                    <td class="price">{{ website[3] or 'N/A' }}</td>
-                    <td >{{ website[4] or 'N/A' }}</td>
-                    <td class="updated">{{ website[5] or 'N/A' }}</td>
-                    <td>
-                        <a href="{{ url_for('update_data_website', website_id=website[0]) }}" 
-                           class="update-btn">Update Data</a>
-                        <a href="{{ url_for('delete', website_id=website[0]) }}" 
-                           onclick="return confirm('Are you sure you want to delete this website?')" 
-                           class="delete-btn">Delete</a>
+                {% for station in selected_stations %}
+                <tr class="selected-row">
+                    <td>{{ station[1] }}</td>
+                    <td>{{ station[2] }}</td>
+                    <td>{{ station[3] }}</td>
+                    <td>{{ station[4] }}</td>
+                    <td>{{ station[5] }}</td>
+                    <td class="actions">
+                        <a href="{{ station[6] }}" target="_blank">Map</a>
+                        <a href="/toggle/{{ station[0] }}">Deselect</a>
+                        <a href="/delete/{{ station[0] }}">Delete</a>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
-    {% else %}
-        <p>No websites added yet.</p>
+    </div>
+    {% endif %}
+
+    <form class="search-form" method="GET" action="/">
+        <input type="hidden" name="sort_by" value="{{ sort_by }}">
+        <input type="hidden" name="sort_dir" value="{{ sort_dir }}">
+        <input type="text" name="banner" value="{{ banner_search }}" placeholder="Banner">
+        <input type="text" name="address" value="{{ address_search }}" placeholder="Address">
+        <input type="text" name="code_postal" value="{{ postal_search }}" placeholder="Postal code">
+        <button type="submit">Search</button>
+    </form>
+
+    {% if has_filters %}
+    <div class="table-container">
+        <h2>All Stations</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='banner', sort_dir='desc' if sort_by=='banner' and sort_dir=='asc' else 'asc') }}">Banner{% if sort_by == 'banner' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='address', sort_dir='desc' if sort_by=='address' and sort_dir=='asc' else 'asc') }}">Address{% if sort_by == 'address' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='prix_regulier', sort_dir='desc' if sort_by=='prix_regulier' and sort_dir=='asc' else 'asc') }}">Prix Régulier{% if sort_by == 'prix_regulier' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='prix_super', sort_dir='desc' if sort_by=='prix_super' and sort_dir=='asc' else 'asc') }}">Prix Super{% if sort_by == 'prix_super' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th><a href="{{ url_for('index', banner=banner_search, address=address_search, code_postal=postal_search, sort_by='code_postal', sort_dir='desc' if sort_by=='code_postal' and sort_dir=='asc' else 'asc') }}">Code Postal{% if sort_by == 'code_postal' %} {{ '↓' if sort_dir == 'asc' else '↑' }}{% endif %}</a></th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if filtered_stations %}
+                    {% for station in filtered_stations %}
+                    <tr>
+                        <td>{{ station[1] }}</td>
+                        <td>{{ station[2] }}</td>
+                        <td>{{ station[3] }}</td>
+                        <td>{{ station[4] }}</td>
+                        <td>{{ station[5] }}</td>
+                        <td class="actions">
+                            <a href="{{ station[6] }}" target="_blank">Map</a>
+                            <a href="/toggle/{{ station[0] }}">Select</a>
+                            <a href="/delete/{{ station[0] }}">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                <tr>
+                    <td colspan="6" class="empty-state">No stations matched your filters.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
     {% endif %}
 </body>
 </html>
-<script>
-  // Function to hide the flash messages container after a delay
-  window.setTimeout(function() {
-      var flashContainer = document.getElementById('flash-messages');
-      if (flashContainer) {
-          flashContainer.style.display = 'none';
-      }
-  }, 1500); // 1500 milliseconds = 1.5 seconds
-</script>
