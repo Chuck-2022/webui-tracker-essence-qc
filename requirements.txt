@@ -6,3 +6,4 @@ pysqlite3
 apscheduler
 pandas==2.1.0
 numpy==1.25.2
+openpyxl==3.1.2
