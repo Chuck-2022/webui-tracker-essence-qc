@@ -5,8 +5,8 @@ services:
     ports:
       - 5000:5000
     volumes:
-      - ./websites.db:/app/websites.db
-      - ./templates:/app/templates
+      - /mnt/main/custom_apps/gasbuddy_scraper/db:/app/db
+      - /mnt/main/custom_apps/gasbuddy_scraper/templates:/app/templates
     environment:
       - FLASK_ENV=production
     restart: unless-stopped

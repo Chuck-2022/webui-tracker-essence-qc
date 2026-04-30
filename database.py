@@ -4,7 +4,7 @@ from flask import flash
 
 
 def init_db():
-    conn = sqlite3.connect('essence.db')
+    conn = sqlite3.connect('./db/essence.db')
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS essence (
@@ -27,7 +27,7 @@ def init_db():
     conn.close()
 
 def get_all_station():
-    conn = sqlite3.connect('essence.db')
+    conn = sqlite3.connect('./db/essence.db')
     c = conn.cursor()
     c.execute('SELECT id, banner, address, prix_regulier, prix_super, code_postal, gmap, selected FROM essence')
     station = c.fetchall()
@@ -41,7 +41,7 @@ def create_gmap_link(addresse):
     return gmap_link
 
 def add_website(data):
-    conn = sqlite3.connect('essence.db')
+    conn = sqlite3.connect('./db/essence.db')
     c = conn.cursor()
     c.execute('SELECT id FROM essence WHERE address = ?', (data['address'],))
     existing = c.fetchone()
@@ -56,7 +56,7 @@ def add_website(data):
     conn.close()
 
 def get_station_by_address(address):
-    conn = sqlite3.connect('essence.db')
+    conn = sqlite3.connect('./db/essence.db')
     c = conn.cursor()
     c.execute('SELECT id FROM essence WHERE address = ?', (address,))
     result = c.fetchone()
@@ -64,7 +64,7 @@ def get_station_by_address(address):
     return result
 
 def toggle_selected(website_id):
-    conn = sqlite3.connect('essence.db')
+    conn = sqlite3.connect('./db/essence.db')
     c = conn.cursor()
     c.execute('SELECT selected FROM essence WHERE id = ?', (website_id,))
     current = c.fetchone()
@@ -75,14 +75,14 @@ def toggle_selected(website_id):
     conn.close()
 
 def delete_website(website_id):
-    conn = sqlite3.connect('essence.db')
+    conn = sqlite3.connect('./db/essence.db')
     c = conn.cursor()
     c.execute('DELETE FROM essence WHERE id = ?', (website_id,))
     conn.commit()
     conn.close()
 
 def update_website_data(data, website_id):
-    conn = sqlite3.connect('essence.db')
+    conn = sqlite3.connect('./db/essence.db')
     c = conn.cursor()
     c.execute(f'''
         UPDATE essence
