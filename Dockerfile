@@ -15,6 +15,9 @@ COPY . .
 # Expose port
 EXPOSE 5000
 
+# Set database path for Docker environment
+ENV DATABASE_PATH=/app/db/essence.db
+
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser
 USER appuser

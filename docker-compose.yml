@@ -1,12 +1,13 @@
 services:
-  gasbuddy-scraper:
-    image: localhost/gasbuddy-scraper:latest
-    container_name: gasbuddy-scraper
+  qc-essence-scraper:
+    container_name: qc-essence-scraper
+    build:
+      context: .
     ports:
       - 5000:5000
     volumes:
-      - /mnt/main/custom_apps/gasbuddy_scraper/db:/app/db
-      - /mnt/main/custom_apps/gasbuddy_scraper/templates:/app/templates
+      - ./db:/app/db
+      - ./templates:/app/templates
     environment:
       - FLASK_ENV=production
     restart: unless-stopped
