@@ -20,7 +20,9 @@ def init_db():
             prix_super TEXT,
             code_postal TEXT,
             gmap TEXT,
-            selected BOOLEAN DEFAULT 0
+            selected BOOLEAN DEFAULT 0,
+            latitude REAL,
+            longitude REAL
         )
     ''')
     # Add selected column if it doesn't exist
@@ -28,13 +30,23 @@ def init_db():
         c.execute('ALTER TABLE essence ADD COLUMN selected BOOLEAN DEFAULT 0')
     except sqlite3.OperationalError:
         pass  # Column already exists
+    
+    # Add latitude and longitude columns if they don't exist
+    try:
+        c.execute('ALTER TABLE essence ADD COLUMN latitude REAL')
+    except sqlite3.OperationalError:
+        pass
+    try:
+        c.execute('ALTER TABLE essence ADD COLUMN longitude REAL')
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
 def get_all_station():
     conn = sqlite3.connect(get_db_path())
     c = conn.cursor()
-    c.execute('SELECT id, banner, address, prix_regulier, prix_super, code_postal, gmap, selected FROM essence')
+    c.execute('SELECT id, banner, address, prix_regulier, prix_super, code_postal, gmap, selected, latitude, longitude FROM essence')
     station = c.fetchall()
     conn.close()
     return station
@@ -54,9 +66,9 @@ def add_website(data):
         flash('Station exist')
         return
     c.execute('''
-        INSERT INTO essence (banner, address, prix_regulier, prix_super, code_postal, gmap, selected)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    ''', (data["banner"], data["address"], data["prix_regulier"], data["prix_super"], data["code_postal"], data["gmap"], data["selected"]))
+        INSERT INTO essence (banner, address, prix_regulier, prix_super, code_postal, gmap, selected, latitude, longitude)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (data["banner"], data["address"], data["prix_regulier"], data["prix_super"], data["code_postal"], data["gmap"], data.get("selected", False), data.get("latitude"), data.get("longitude")))
     conn.commit()
     conn.close()
 
@@ -91,8 +103,21 @@ def update_website_data(data, website_id):
     c = conn.cursor()
     c.execute(f'''
         UPDATE essence
-        SET banner = ?, address = ?, prix_regulier = ?, prix_super = ?, code_postal = ?, gmap = ?
+        SET banner = ?, address = ?, prix_regulier = ?, prix_super = ?, code_postal = ?, gmap = ?, latitude = ?, longitude = ?
         WHERE id = ?
-    ''', (data["banner"], data["address"], data["prix_regulier"], data["prix_super"], data["code_postal"], data["gmap"], website_id))
+    ''', (data["banner"], data["address"], data["prix_regulier"], data["prix_super"], data["code_postal"], data["gmap"], data.get("latitude"), data.get("longitude"), website_id))
     conn.commit()
     conn.close()
+
+def get_stations_with_coordinates():
+    """Get all stations that have latitude and longitude"""
+    conn = sqlite3.connect(get_db_path())
+    c = conn.cursor()
+    c.execute('''
+        SELECT id, banner, address, prix_regulier, prix_super, code_postal, latitude, longitude, gmap 
+        FROM essence 
+        WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+    ''')
+    stations = c.fetchall()
+    conn.close()
+    return stations

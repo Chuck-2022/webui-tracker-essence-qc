@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Planner - Gas Stations Finder</title>
+    
+    <!-- Leaflet CSS for map -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.min.css" />
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+
+        .nav {
+            background: #007bff;
+            padding: 15px 20px;
+        }
+
+        .nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .nav a:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 50px);
+        }
+
+        .search-section {
+            width: 400px;
+            background: white;
+            padding: 20px;
+            border-right: 1px solid #ddd;
+            overflow-y: auto;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+        }
+
+        .search-section h2 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #545b62;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .stations-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .stations-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .station-item {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            font-size: 12px;
+        }
+
+        .station-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .station-address {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        .station-address a {
+            color: #007bff;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .station-address a:hover {
+            color: #0056b3;
+            text-decoration: underline;
+        }
+
+        .station-prices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .price {
+            font-size: 11px;
+        }
+
+        .price-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .price-value {
+            color: #007bff;
+            font-weight: 600;
+        }
+
+        .station-metrics {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .metric-label {
+            color: #666;
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .back-to-list-btn {
+            position: absolute;
+            top: 1vh;
+            right: 1vh;
+            z-index: 1000;
+            background: white;
+            color: #333;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            padding: 8px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+
+        .back-to-list-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .map-section {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .map-section.visible {
+            display: flex;
+        }
+
+        #map {
+            flex: 1;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 14px;
+            gap: 10px;
+        }
+
+        .leaflet-popup-content {
+            font-size: 12px;
+        }
+
+        .leaflet-popup-content b {
+            color: #333;
+        }
+
+        .price-marker {
+            display: inline-block;
+            background: #ff6600;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border-radius: 10px 10px 10px 0;
+            padding: 5px 8px;
+            white-space: nowrap;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+            border: 2px solid white;
+            line-height: 1;
+            pointer-events: auto;
+        }
+
+        .price-marker.greyed {
+            background: #999;
+            box-shadow: none;
+        }
+
+        @media (max-width: 1024px) {
+            .search-section {
+                width: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .search-section {
+                width: 100%;
+                max-height: 100%;
+                border-right: none;
+                border-bottom: 1px solid #ddd;
+                overflow-y: auto;
+                z-index: 10;
+            }
+
+            .map-section.visible {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 5;
+            }
+
+            #map {
+                flex: 1;
+            }
+
+            .stations-list {
+                max-height: 90vh;
+            }
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .distance-filter {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .sort-options {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .sort-options label {
+            display: block;
+            margin-bottom: 10px;
+            color: #666;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .sort-btn {
+            flex: 1;
+        }
+
+        .sort-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .sort-btn:not(.active) {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .toggle-map-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: #17a2b8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .toggle-map-btn:hover {
+            background: #138496;
+        }
+
+        .distance-filter label {
+            display: block;
+            margin-bottom: 8px;
+            color: #666;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .slider-container input[type="range"] {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .distance-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: #007bff;
+            font-size: 14px;
+        }
+
+        .station-item.filtered-out {
+            display: none;
+        }
+
+        .station-item {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .station-item:hover {
+            background: #f0f0f0;
+            border-color: #007bff;
+            box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+        }
+
+        .station-item.highlighted {
+            background: #e3f2fd;
+            border: 2px solid #007bff;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="nav">
+        <a href="/">← Back to Station List</a>
+    </div>
+
+    <div class="container">
+        <div class="search-section">
+            <h2>Route Planner</h2>
+            
+            {% if error_message %}
+            <div class="error">{{ error_message }}</div>
+            {% endif %}
+
+            {% if stations and not error_message %}
+            <div class="success-message">
+                ✓ Found {{ stations|length }} station(s) near your route
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/route-planner">
+                <div class="form-group">
+                    <label for="start">Starting Address:</label>
+                    <div style="display: flex; gap: 5px;">
+                        <input 
+                            type="text" 
+                            id="start" 
+                            name="start_address" 
+                            placeholder="e.g., 45 Rue McGill, Montreal"
+                            required
+                        >
+                        <button type="button" id="getCurrentLocation" class="btn btn-secondary" style="flex: 0 0 auto; padding: 10px 12px;" title="Use current location">📍</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="end">Destination Address:</label>
+                    <input 
+                        type="text" 
+                        id="end" 
+                        name="end_address" 
+                        placeholder="e.g., Quebec City, QC"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="threshold">Within (km):</label>
+                    <input 
+                        type="number" 
+                        id="threshold" 
+                        name="threshold" 
+                        value="2" 
+                        min="0.5" 
+                        max="20" 
+                        step="0.5"
+                    >
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">🔍 Search Route</button>
+                    <button type="reset" class="btn btn-secondary">Clear</button>
+                </div>
+            </form>
+
+            {% if stations %}
+            <div class="distance-filter">
+                <label for="distanceSlider">Filter by Distance from Start: <span class="distance-value"><span id="distanceValue">100</span> km</span></label>
+                <div class="slider-container">
+                    <input type="range" id="distanceSlider" min="0" max="100" value="100" step="0.5">
+                </div>
+            </div>
+            
+            <div class="sort-options">
+                <label>Sort by Price:</label>
+                <div class="button-group">
+                    <button type="button" id="sortRegular" class="btn btn-primary sort-btn active" title="Sort by Regular price">Regular</button>
+                    <button type="button" id="sortSuper" class="btn btn-secondary sort-btn" title="Sort by Super price">Super</button>
+                </div>
+            </div>
+
+            <button type="button" id="toggleMapBtn" class="toggle-map-btn">📍 Show Map</button>
+            {% endif %}
+
+            {% if stations %}
+            <div class="stations-list">
+                <div class="stations-header">Gas Stations ({{ stations|length }})</div>
+                {% for station in stations %}
+                <div class="station-item" data-lat="{{ station.latitude }}" data-lon="{{ station.longitude }}" data-distance="{{ station.distance_from_start }}" data-regular="{{ station.prix_regulier or '' }}" data-super="{{ station.prix_super or '' }}">
+                    <div class="station-name">{{ station.banner or 'Unknown' }}</div>
+                    <div class="station-address">
+                        📍 <a href="{{ station.gmap }}" target="_blank" style="color: #007bff; text-decoration: none; cursor: pointer;" title="Open in Google Maps">{{ station.address }}</a>
+                    </div>
+                    <div class="station-prices">
+                        <div class="price">
+                            <span class="price-label">Regular:</span><br>
+                            <span class="price-value">${{ station.prix_regulier or 'N/A' }}</span>
+                        </div>
+                        <div class="price">
+                            <span class="price-label">Super:</span><br>
+                            <span class="price-value">${{ station.prix_super or 'N/A' }}</span>
+                        </div>
+                    </div>
+                    <div class="station-metrics">
+                        <div class="metric">
+                            <span class="metric-label">From Start:</span>
+                            <span class="metric-value">{{ station.distance_from_start }} km</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Time Detour:</span>
+                            <span class="metric-value">{{ station.time_detour }} min</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% elif not error_message %}
+            <div class="empty-state">
+                <div style="font-size: 40px;">🗺️</div>
+                <p>Enter addresses and click "Search Route" to find nearby gas stations</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="map-section">
+            <button id="backToListBtn" class="back-to-list-btn">← Back to List</button>
+            <div id="map" style="flex: 1;"></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS for map -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.min.js"></script>
+
+    <script>
+        // Global map variable for filter functions
+        let leafletMap = null;
+        let mapMarkers = {};  // Store markers by station id for filtering
+
+        // Highlight a station (open popup and focus)
+        function highlightStation(stationId) {
+            const markerData = mapMarkers[stationId];
+            if (markerData) {
+                // Open popup
+                markerData.marker.openPopup();
+                // Center map on marker
+                leafletMap.setView(markerData.marker.getLatLng(), 14);
+                
+                // Highlight in list
+                const stationItems = document.querySelectorAll('.station-item');
+                stationItems.forEach(item => {
+                    item.classList.remove('highlighted');
+                });
+                
+                // Find and highlight the matching list item by coordinates
+                const lat = markerData.marker.getLatLng().lat;
+                const lon = markerData.marker.getLatLng().lng;
+                
+                stationItems.forEach(item => {
+                    const itemLat = parseFloat(item.dataset.lat);
+                    const itemLon = parseFloat(item.dataset.lon);
+                    
+                    if (Math.abs(itemLat - lat) < 0.0001 && Math.abs(itemLon - lon) < 0.0001) {
+                        item.classList.add('highlighted');
+                        item.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+                    }
+                });
+            }
+        }
+
+        // Save and restore form inputs
+        document.addEventListener('DOMContentLoaded', function() {
+            const startInput = document.getElementById('start');
+            const endInput = document.getElementById('end');
+            const thresholdInput = document.getElementById('threshold');
+            const getCurrentLocationBtn = document.getElementById('getCurrentLocation');
+
+            // Restore saved values from localStorage
+            function restoreInputs() {
+                const savedStart = localStorage.getItem('route_start');
+                const savedEnd = localStorage.getItem('route_end');
+                const savedThreshold = localStorage.getItem('route_threshold');
+
+                if (savedStart) startInput.value = savedStart;
+                if (savedEnd) endInput.value = savedEnd;
+                if (savedThreshold) thresholdInput.value = savedThreshold;
+            }
+
+            // Save inputs to localStorage
+            function saveInputs() {
+                localStorage.setItem('route_start', startInput.value);
+                localStorage.setItem('route_end', endInput.value);
+                localStorage.setItem('route_threshold', thresholdInput.value);
+            }
+
+            // Restore on load
+            restoreInputs();
+
+            // Save on input
+            startInput.addEventListener('input', saveInputs);
+            endInput.addEventListener('input', saveInputs);
+            thresholdInput.addEventListener('input', saveInputs);
+
+            // Save before form submit
+            document.querySelector('form').addEventListener('submit', saveInputs);
+
+            // Get current location
+            getCurrentLocationBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                if (!navigator.geolocation) {
+                    alert('Geolocation is not supported by your browser');
+                    return;
+                }
+
+                getCurrentLocationBtn.disabled = true;
+                getCurrentLocationBtn.textContent = '⏳';
+
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        
+                        // Use reverse geocoding to get address from coordinates
+                        // We'll use Nominatim (same as backend) to get the address
+                        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                const address = data.address || `${lat}, ${lon}`;
+                                const displayAddress = data.address ? 
+                                    (data.address.house_number ? 
+                                        `${data.address.house_number} ${data.address.road || ''}, ${data.address.city || data.address.town || ''}` 
+                                        : `${data.address.city || data.address.town || ''}, ${data.address.state || ''}`
+                                    ) 
+                                    : `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                                
+                                startInput.value = displayAddress;
+                                saveInputs();
+                                getCurrentLocationBtn.disabled = false;
+                                getCurrentLocationBtn.textContent = '📍';
+                            })
+                            .catch(error => {
+                                console.error('Error getting address:', error);
+                                // Fallback to coordinates
+                                startInput.value = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                                saveInputs();
+                                getCurrentLocationBtn.disabled = false;
+                                getCurrentLocationBtn.textContent = '📍';
+                            });
+                    },
+                    function(error) {
+                        let errorMsg = 'Unable to get your location';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg = 'Location permission denied. Please enable location access in your browser settings.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg = 'Location information is unavailable.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg = 'The request to get user location timed out.';
+                                break;
+                        }
+                        alert(errorMsg);
+                        getCurrentLocationBtn.disabled = false;
+                        getCurrentLocationBtn.textContent = '📍';
+                    }
+                );
+            });
+
+            // Rest of the existing script continues below
+            const stationItems = document.querySelectorAll('.station-item');
+            const distanceSlider = document.getElementById('distanceSlider');
+            const distanceValue = document.getElementById('distanceValue');
+            const sortRegularBtn = document.getElementById('sortRegular');
+            const sortSuperBtn = document.getElementById('sortSuper');
+            const toggleMapBtn = document.getElementById('toggleMapBtn');
+
+            if (!distanceSlider) return; // No stations
+
+            // Track current sort type
+            let currentSortType = 'regular'; // 'regular' or 'super'
+
+            // Parse station data
+            const stations = Array.from(stationItems).map(item => {
+                const prices = item.querySelectorAll('.price-value');
+                const regularPrice = parseFloat(prices[0]?.textContent.replace('$', '') || '0') || 0;
+                const superPrice = parseFloat(prices[1]?.textContent.replace('$', '') || '0') || 0;
+                const distanceText = item.querySelector('.metric-value')?.textContent || '0';
+                const distance = parseFloat(distanceText.split(' ')[0]) || 0;
+                return {
+                    element: item,
+                    regularPrice: regularPrice,
+                    superPrice: superPrice,
+                    distance: distance
+                };
+            });
+
+            // Sort function
+            function sortStations(type) {
+                currentSortType = type;
+                const key = type === 'regular' ? 'regularPrice' : 'superPrice';
+                
+                // Update button states
+                if (type === 'regular') {
+                    sortRegularBtn.classList.add('active');
+                    sortRegularBtn.style.background = '#007bff';
+                    sortRegularBtn.style.color = 'white';
+                    sortSuperBtn.classList.remove('active');
+                    sortSuperBtn.style.background = '#e0e0e0';
+                    sortSuperBtn.style.color = '#333';
+                } else {
+                    sortSuperBtn.classList.add('active');
+                    sortSuperBtn.style.background = '#007bff';
+                    sortSuperBtn.style.color = 'white';
+                    sortRegularBtn.classList.remove('active');
+                    sortRegularBtn.style.background = '#e0e0e0';
+                    sortRegularBtn.style.color = '#333';
+                }
+                
+                // Sort by selected price type
+                stations.sort((a, b) => a[key] - b[key]);
+                
+                // Reorder elements in DOM
+                const container = document.querySelector('.stations-list');
+                stations.forEach(s => container.appendChild(s.element));
+
+                // Refresh marker price labels for the new sort type
+                updateMapMarkers();
+            }
+
+            // Initial sort by regular price
+            stations.sort((a, b) => a.regularPrice - b.regularPrice);
+
+            // Set slider max to highest distance + 10%
+            const maxDistance = Math.max(...stations.map(s => s.distance)) * 1.1;
+            distanceSlider.max = Math.ceil(maxDistance);
+            distanceSlider.value = Math.ceil(maxDistance);
+            distanceValue.textContent = distanceSlider.value;
+
+            // Reorder elements in DOM by price
+            const container = document.querySelector('.stations-list');
+            stations.forEach(s => container.appendChild(s.element));
+
+            // Sort button event listeners
+            sortRegularBtn.addEventListener('click', () => sortStations('regular'));
+            sortSuperBtn.addEventListener('click', () => sortStations('super'));
+
+            // Detect mobile device
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+            // Map toggle helpers
+            function showMap() {
+                const mapSection = document.querySelector('.map-section');
+                mapSection.classList.add('visible');
+                if (isMobile) {
+                    toggleMapBtn.textContent = '🗺️ Map Open';
+                    toggleMapBtn.disabled = true;
+                    document.querySelector('.search-section').style.display = 'none';
+                }
+                if (leafletMap) {
+                    setTimeout(() => leafletMap.invalidateSize(), 50);
+                }
+            }
+
+            function hideMap() {
+                if (!isMobile) return; // desktop map always stays visible
+                const mapSection = document.querySelector('.map-section');
+                mapSection.classList.remove('visible');
+                toggleMapBtn.textContent = '📍 Show Map';
+                toggleMapBtn.disabled = false;
+                document.querySelector('.search-section').style.display = '';
+            }
+
+            if (isMobile) {
+                // Mobile: show the toggle button, back button handles return
+                if (toggleMapBtn) toggleMapBtn.addEventListener('click', showMap);
+                const backToListBtn = document.getElementById('backToListBtn');
+                if (backToListBtn) backToListBtn.addEventListener('click', hideMap);
+            } else {
+                // Desktop: always show map, hide both buttons
+                if (toggleMapBtn) toggleMapBtn.style.display = 'none';
+                const backToListBtn = document.getElementById('backToListBtn');
+                if (backToListBtn) backToListBtn.style.display = 'none';
+                showMap();
+            }
+
+            // Add click handlers to station items to highlight them and show on map
+            stationItems.forEach((item, index) => {
+                item.addEventListener('click', function(e) {
+                    // Don't trigger if clicking on price/metrics
+                    if (e.target.closest('.price') || e.target.closest('.metric')) {
+                        return;
+                    }
+                    
+                    // Get station ID from data attribute
+                    const lat = parseFloat(item.dataset.lat);
+                    const lon = parseFloat(item.dataset.lon);
+                    
+                    // Find matching marker
+                    for (let stationId in mapMarkers) {
+                        const markerData = mapMarkers[stationId];
+                        const markerLat = markerData.marker.getLatLng().lat;
+                        const markerLon = markerData.marker.getLatLng().lng;
+                        
+                        if (Math.abs(markerLat - lat) < 0.0001 && Math.abs(markerLon - lon) < 0.0001) {
+                            highlightStation(stationId);
+                            break;
+                        }
+                    }
+                });
+            });
+
+            // Get the map object
+            function getMap() {
+                return leafletMap;
+            }
+
+            // Build map from JSON data
+            function buildMap(mapData) {
+                if (!mapData) return;
+                
+                // Create map
+                leafletMap = L.map('map').setView([mapData.center_lat, mapData.center_lon], 10);
+                
+                // Add OpenStreetMap tile layer
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(leafletMap);
+                
+                // Add start marker (green)
+                L.marker([mapData.start.lat, mapData.start.lon], {
+                    icon: L.divIcon({
+                        className: '',
+                        html: '<div style="background:#22c55e;color:white;font-weight:700;font-size:12px;font-family:\'Segoe UI\',sans-serif;border-radius:10px 10px 10px 0;padding:5px 8px;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:2px solid white;line-height:1;">🚦 Start</div>',
+                        iconSize: null,
+                        iconAnchor: [0, 28],
+                        popupAnchor: [0, -30]
+                    })
+                }).bindPopup(mapData.start.label).addTo(leafletMap);
+                
+                // Add end marker (red)
+                L.marker([mapData.end.lat, mapData.end.lon], {
+                    icon: L.divIcon({
+                        className: '',
+                        html: '<div style="background:#ef4444;color:white;font-weight:700;font-size:12px;font-family:\'Segoe UI\',sans-serif;border-radius:10px 10px 10px 0;padding:5px 8px;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,0.4);border:2px solid white;line-height:1;">🏁 End</div>',
+                        iconSize: null,
+                        iconAnchor: [0, 28],
+                        popupAnchor: [0, -30]
+                    })
+                }).bindPopup(mapData.end.label).addTo(leafletMap);
+                
+                // Add route polyline
+                const routeLine = L.polyline(mapData.route_points, {
+                    color: 'blue',
+                    weight: 4,
+                    opacity: 0.8
+                }).addTo(leafletMap);
+                
+                // Helper: interpolate green→yellow→red based on 0–1 ratio (0 = cheapest, 1 = priciest)
+                function priceColor(ratio) {
+                    // green  #22c55e → yellow #facc15 → red #ef4444
+                    let r, g, b;
+                    if (ratio < 0.5) {
+                        const t = ratio * 2;
+                        r = Math.round(34  + t * (250 - 34));
+                        g = Math.round(197 + t * (204 - 197));
+                        b = Math.round(94  + t * (21  - 94));
+                    } else {
+                        const t = (ratio - 0.5) * 2;
+                        r = Math.round(250 + t * (239 - 250));
+                        g = Math.round(204 + t * (68  - 204));
+                        b = Math.round(21  + t * (68  - 21));
+                    }
+                    return `rgb(${r},${g},${b})`;
+                }
+
+                // Helper: build a price DivIcon
+                function makePriceIcon(price, greyed, ratio) {
+                    const parsed = parseFloat(price);
+                    const label = (!price || price === 'N/A' || price === 'None' || isNaN(parsed))
+                        ? 'N/A'
+                        : `$${parsed.toFixed(1)}`;
+                    const bg = greyed ? '#999' : priceColor(ratio ?? 0.5);
+                    // Pick text colour: dark text on light backgrounds (yellow range)
+                    const textColor = (!greyed && ratio !== null && ratio < 0.75 && ratio > 0.25)
+                        ? '#1a1a1a' : 'white';
+                    return L.divIcon({
+                        className: '',
+                        html: `<div class="price-marker" style="background:${bg};color:${textColor};${greyed ? 'box-shadow:none' : ''}">${label}</div>`,
+                        iconSize: null,
+                        iconAnchor: [0, 28],
+                        popupAnchor: [0, -30]
+                    });
+                }
+
+                // Add each station
+                if (mapData.stations.length > 0) {
+                    const s = mapData.stations[0];
+                    console.log('First station sample:', JSON.stringify({
+                        id: s.id, banner: s.banner,
+                        prix_regulier: s.prix_regulier, prix_super: s.prix_super
+                    }));
+                }
+
+                // Build a lookup of prices from the DOM (ground truth, already rendered by Jinja)
+                const domPrices = {};
+                document.querySelectorAll('.station-item').forEach(item => {
+                    const lat = parseFloat(item.dataset.lat);
+                    const lon = parseFloat(item.dataset.lon);
+                    domPrices[`${lat.toFixed(5)},${lon.toFixed(5)}`] = {
+                        regular: item.dataset.regular,
+                        super: item.dataset.super
+                    };
+                });
+
+                mapData.stations.forEach(station => {
+                    // Prefer DOM prices (already processed by Jinja) over raw JSON values
+                    const key = `${parseFloat(station.latitude).toFixed(5)},${parseFloat(station.longitude).toFixed(5)}`;
+                    const domPrice = domPrices[key] || {};
+                    const regularPrice = domPrice.regular || station.prix_regulier;
+                    const superPrice = domPrice.super || station.prix_super;
+                    const marker = L.marker([station.latitude, station.longitude], {
+                        icon: makePriceIcon(regularPrice, false, null)
+                    }).bindPopup(
+                        `<b>${station.banner}</b><br>
+                         ${station.address}<br>
+                         Regular: $${regularPrice}<br>
+                         Super: $${superPrice}<br>
+                         Detour: ${station.time_detour} min<br>
+                         <a href="${station.gmap}" target="_blank" style="color:#007bff;font-weight:600;text-decoration:none;">🗺 Open in Google Maps</a>`
+                    ).bindTooltip(
+                        `${station.banner} - ${station.distance_from_start}km from start`,
+                        {permanent: false}
+                    ).addTo(leafletMap);
+
+                    mapMarkers[station.id] = {
+                        marker: marker,
+                        distance: station.distance_from_start,
+                        stationId: station.id,
+                        prix_regulier: regularPrice,
+                        prix_super: superPrice,
+                        makePriceIcon: makePriceIcon
+                    };
+                    
+                    // Add click handler to marker to highlight it
+                    marker.on('click', function() {
+                        highlightStation(station.id);
+                    });
+                });
+                
+                console.log(`Map created with ${mapData.stations.length} stations`);
+            }
+            
+            // Parse and build map if data exists
+            const mapJsonStr = `{{ map_json | safe }}`;
+            if (mapJsonStr && mapJsonStr.trim() !== 'null' && mapJsonStr.trim() !== '') {
+                try {
+                    const mapData = JSON.parse(mapJsonStr);
+                    
+                    // Wait for map div to be ready
+                    setTimeout(() => {
+                        buildMap(mapData);
+                        // Force Leaflet to recalculate container size (fixes grey tiles)
+                        setTimeout(() => {
+                            if (leafletMap) leafletMap.invalidateSize();
+                        }, 200);
+                        console.log('Leaflet map initialized');
+                        updateMapMarkers();  // Initial filter
+                    }, 100);
+                } catch (e) {
+                    console.error('Failed to parse map data:', e);
+                }
+            }
+
+            // Update map markers based on distance filter and current sort type
+            function updateMapMarkers() {
+                const maxDist = parseFloat(distanceSlider.value);
+                const priceKey = currentSortType === 'super' ? 'prix_super' : 'prix_regulier';
+
+                // Collect valid prices for visible (non-greyed) markers to compute range
+                const visiblePrices = [];
+                for (let stationId in mapMarkers) {
+                    const d = mapMarkers[stationId];
+                    if (d.distance <= maxDist) {
+                        const p = parseFloat(d[priceKey]);
+                        if (!isNaN(p)) visiblePrices.push(p);
+                    }
+                }
+                const minP = Math.min(...visiblePrices);
+                const maxP = Math.max(...visiblePrices);
+                const range = maxP - minP || 1; // avoid divide-by-zero when all prices equal
+
+                for (let stationId in mapMarkers) {
+                    const markerData = mapMarkers[stationId];
+                    const greyed = markerData.distance > maxDist;
+                    const price = markerData[priceKey];
+                    const parsed = parseFloat(price);
+                    const ratio = (!isNaN(parsed) && !greyed) ? (parsed - minP) / range : null;
+
+                    markerData.marker.setIcon(
+                        markerData.makePriceIcon(price, greyed, ratio)
+                    );
+                }
+            }
+
+            // Filter function
+            function updateFilter() {
+                const maxDist = parseFloat(distanceSlider.value);
+                distanceValue.textContent = maxDist.toFixed(1);
+
+                stations.forEach(station => {
+                    if (station.distance <= maxDist) {
+                        station.element.classList.remove('filtered-out');
+                    } else {
+                        station.element.classList.add('filtered-out');
+                    }
+                });
+
+                // Also update map markers
+                updateMapMarkers();
+            }
+
+            // Slider event listener
+            distanceSlider.addEventListener('input', updateFilter);
+
+            // Initial map update with longer delay to ensure map is ready
+            setTimeout(() => {
+                console.log('Initializing map markers...');
+                updateMapMarkers();
+            }, 500);
+        });
+    </script>
