@@ -7,7 +7,6 @@ services:
       - 5000:5000
     volumes:
       - /mnt/main/custom_apps/gasbuddy_scraper/db:/app/db
-      - /mnt/main/custom_apps/gasbuddy_scraper/templates:/app/templates
     environment:
       - FLASK_ENV=production
     restart: unless-stopped
